@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>五十音智能学习</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+<div id="app" class="p-6 max-w-4xl mx-auto">
+
+  <h1 class="text-3xl font-bold mb-4">五十音智能学习</h1>
+  <p class="text-gray-600 mb-6">点击假名可播放发音，悬停显示罗马音。</p>
+
+  <!-- 五十音表 -->
+  <div class="grid grid-cols-5 gap-3 mb-8">
+    <div v-for="kana in kanaList" :key="kana.char"
+         class="p-4 bg-white rounded-xl shadow hover:bg-blue-50 cursor-pointer relative group"
+         @click="playSound(kana.char)">
+      <span class="text-2xl font-bold">{{ kana.char }}</span>
+      <span class="absolute bottom-2 right-2 text-sm text-gray-400 opacity-0 group-hover:opacity-100 transition">
+        {{ kana.roma }}
+      </span>
+    </div>
+  </div>
+
+  <!-- 小游戏 -->
+  <div class="bg-yellow-50 p-6 rounded-xl shadow">
+    <h2 class="text-xl font-bold mb-4">小游戏：选出正确的罗马音</h2>
+    <p class="text-lg mb-4">假名：<span class="text-3xl font-bold">{{ quiz.kana }}</span></p>
+    <div class="grid grid-cols-3 gap-4">
+      <button v-for="opt in quiz.options" :key="opt"
+              @click="checkAnswer(opt)"
+              class="bg-white px-4 py-2 rounded-lg shadow hover:bg-green-100">
+        {{ opt }}
+      </button>
+    </div>
+    <p class="mt-4 font-semibold" v-if="quiz.message">{{ quiz.message }}</p>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      kanaList: [
+        { char: 'あ', roma: 'a' }, { char: 'い', roma: 'i' }, { char: 'う', roma: 'u' },
+        { char: 'え', roma: 'e' }, { char: 'お', roma: 'o' },
+        { char: 'か', roma: 'ka' }, { char: 'き', roma: 'ki' }, { char: 'く', roma: 'ku' },
+        { char: 'け', roma: 'ke' }, { char: 'こ', roma: 'ko' },
+        { char: 'さ', roma: 'sa' }, { char: 'し', roma: 'shi' }, { char: 'す', roma: 'su' },
+        { char: 'せ', roma: 'se' }, { char: 'そ', roma: 'so' }
+      ],
+      quiz: {
+        kana: '',
+        answer: '',
+        options: [],
+        message: ''
+      }
+    }
+  },
+  mounted() {
+    this.newQuiz();
+  },
+  methods: {
+    playSound(kana) {
+      const utter = new SpeechSynthesisUtterance(kana);
+      utter.lang = 'ja-JP';
+      speechSynthesis.speak(utter);
+    },
+    newQuiz() {
+      const randomKana = this.kanaList[Math.floor(Math.random() * this.kanaList.length)];
+      this.quiz.kana = randomKana.char;
+      this.quiz.answer = randomKana.roma;
+      const options = new Set([randomKana.roma]);
+      while (options.size < 3) {
+        options.add(this.kanaList[Math.floor(Math.random() * this.kanaList.length)].roma);
+      }
+      this.quiz.options = [...options].sort(() => Math.random() - 0.5);
+      this.quiz.message = '';
+    },
+    checkAnswer(opt) {
+      if (opt === this.quiz.answer) {
+        this.quiz.message = '✅ 正确！';
+        setTimeout(() => this.newQuiz(), 1000);
+      } else {
+        this.quiz.message = '❌ 再试一次！';
+      }
+    }
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>
